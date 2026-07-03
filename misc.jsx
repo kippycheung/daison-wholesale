@@ -2,6 +2,24 @@
    DAISON WHOLESALE — Contact / Get-a-Quote + About
    =========================================================== */
 
+/* Shared submit: try real email (server), else open the mail app. */
+async function submitQuoteRequest(form, items, s) {
+  const payload = {
+    name: form.name, business: form.business, email: form.email, phone: form.phone,
+    message: form.message,
+    items: items.map((it) => ({ qty: it.qty, name: it.name, pack: it.pack || "" })),
+  };
+  const res = await DaisonStore.sendQuote(payload);
+  if (res.ok) return { ok: true, method: "email" };
+  const quoteSummary = items.length
+    ? "\n\nQuote list:\n" + items.map((it) => `• ${it.qty} × ${it.name}${it.pack ? " (" + it.pack + ")" : ""}`).join("\n")
+    : "";
+  const subject = `Quote request — ${form.business || form.name}`;
+  const body = `Name: ${form.name}\nBusiness: ${form.business}\nEmail: ${form.email}\nPhone: ${form.phone}\n\n${form.message}${quoteSummary}`;
+  window.location.href = `mailto:${s.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return { ok: true, method: "mailto" };
+}
+
 function ContactPage({ route }) {
   const s = DaisonStore.getSettings();
   const { items, clear } = useQuote();
@@ -13,14 +31,11 @@ function ContactPage({ route }) {
     name: "", business: "", email: "", phone: "",
     message: singleItem ? `I'd like a quote on: ${singleItem}\n\n` : "",
   });
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState(null);   // null | "email" | "mailto"
+  const [busy, setBusy] = useState(false);
   const [errs, setErrs] = useState({});
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  const quoteSummary = items.length
-    ? "\n\nQuote list:\n" + items.map((it) => `• ${it.qty} × ${it.name}${it.pack ? " (" + it.pack + ")" : ""}`).join("\n")
-    : "";
 
   const validate = () => {
     const e = {};
@@ -31,30 +46,30 @@ function ContactPage({ route }) {
     return Object.keys(e).length === 0;
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-    // Compose mailto as the no-backend fallback. (Wire to Formspree / a Vercel
-    // serverless function here for a true server-side submission.)
-    const subject = `Quote request — ${form.business || form.name}`;
-    const body =
-      `Name: ${form.name}\nBusiness: ${form.business}\nEmail: ${form.email}\nPhone: ${form.phone}\n\n` +
-      `${form.message}${quoteSummary}`;
-    window.location.href = `mailto:${s.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setSent(true);
+    setBusy(true);
+    const res = await submitQuoteRequest(form, items, s);
+    setBusy(false);
+    setSent(res.method);
   };
+
+  const mapSrc = "https://www.google.com/maps?q=" + encodeURIComponent(s.mapQuery || s.address) + "&output=embed";
 
   if (sent) {
     return (
       <main className="wrap contact-sent">
         <div className="sent-card card">
           <div className="sent-ic"><Icon name="check" size={34} /></div>
-          <h1>Your request is ready to send</h1>
-          <p>We’ve opened your email app with everything filled in — just hit send and we’ll reply with pricing and availability, usually the same business day.</p>
-          <p className="muted" style={{ fontSize: 14 }}>If nothing opened, email us directly at <a href={"mailto:" + s.email} style={{ color: "var(--green-700)", fontWeight: 700 }}>{s.email}</a> or call {s.phone}.</p>
+          <h1>{sent === "email" ? "Request sent — thank you!" : "Your request is ready to send"}</h1>
+          <p>{sent === "email"
+            ? "We’ve received your request and will reply with pricing and availability, usually the same business day."
+            : "We’ve opened your email app with everything filled in — just hit send and we’ll reply with pricing and availability."}</p>
+          <p className="muted" style={{ fontSize: 14 }}>Prefer to reach us directly? Email <a href={"mailto:" + s.email} style={{ color: "var(--green-700)", fontWeight: 700 }}>{s.email}</a> or call {s.phone}.</p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 10, flexWrap: "wrap" }}>
             <a href="#/catalogue" className="btn btn-primary">Back to catalogue</a>
-            <button className="btn btn-ghost" onClick={() => { clear(); setSent(false); }}>Start a new request</button>
+            <button className="btn btn-ghost" onClick={() => { clear(); setSent(null); setForm({ name: "", business: "", email: "", phone: "", message: "" }); }}>Start a new request</button>
           </div>
         </div>
       </main>
@@ -113,8 +128,8 @@ function ContactPage({ route }) {
               placeholder="List items, quantities, delivery area, and how often you'll reorder…" />
             {errs.message && <em>{errs.message}</em>}
           </label>
-          <button className="btn btn-gold btn-lg" type="submit" style={{ justifyContent: "center" }}>
-            <Icon name="mail" size={18} /> Send quote request
+          <button className="btn btn-gold btn-lg" type="submit" disabled={busy} style={{ justifyContent: "center" }}>
+            <Icon name="mail" size={18} /> {busy ? "Sending…" : "Send quote request"}
           </button>
           <p className="form-foot">By sending, you agree to be contacted about your request. We never take payment online.</p>
         </form>
@@ -127,11 +142,15 @@ function ContactPage({ route }) {
             <div className="ci-row"><span className="ci-ic"><Icon name="pin" size={18} /></span><div><div className="ci-k">Visit</div><div className="ci-v">{s.address}</div></div></div>
             <div className="ci-row"><span className="ci-ic"><Icon name="clock" size={18} /></span><div><div className="ci-k">Hours</div><div className="ci-v">{s.hours}</div></div></div>
             <a className="btn btn-ghost btn-sm" style={{ justifyContent: "center", marginTop: 4 }}
-               href="https://www.google.com/maps/dir/?api=1&destination=609-28+St+NE%2C+Calgary%2C+AB+T2A+4L6" target="_blank" rel="noreferrer">
+               href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(s.mapQuery || s.address)} target="_blank" rel="noreferrer">
               Get directions <Icon name="arrow" size={16} />
             </a>
           </div>
-          <div className="contact-map ph"><span>map — 609-28 St NE, Calgary</span></div>
+          <div className="contact-map">
+            <iframe title="Daison Wholesale location" src={mapSrc} loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade" allowFullScreen
+              style={{ border: 0, width: "100%", height: "100%", display: "block" }}></iframe>
+          </div>
         </aside>
       </div>
     </main>
@@ -189,4 +208,4 @@ function AboutPage() {
   );
 }
 
-Object.assign(window, { ContactPage, AboutPage });
+Object.assign(window, { ContactPage, AboutPage, submitQuoteRequest });

@@ -93,6 +93,21 @@
   text-align: center; gap: 8px; padding: 40px; color: var(--ink-soft); }
 .drawer-empty svg { color: var(--ink-faint); margin-bottom: 6px; }
 .drawer-empty p { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--ink); margin: 0; }
+
+/* drawer contact form (empty quote list) */
+.drawer-contact { flex: 1; overflow-y: auto; padding: 22px; }
+.drawer-contact-intro { text-align: center; color: var(--ink-soft); display: flex; flex-direction: column;
+  align-items: center; gap: 8px; padding-bottom: 18px; border-bottom: 1px solid var(--line-2); margin-bottom: 18px; }
+.drawer-contact-intro svg { color: var(--gold-600); }
+.drawer-contact-intro p { font-size: 14px; line-height: 1.5; margin: 0; max-width: 320px; }
+.drawer-browse { font-size: 13px; color: var(--green-700); font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+.drawer-form { display: flex; flex-direction: column; gap: 14px; }
+.drawer-form .field { display: flex; flex-direction: column; gap: 6px; }
+.drawer-form .field > span { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+.drawer-form input, .drawer-form textarea { width: 100%; border: 1.5px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; font: inherit; font-size: 14px; background: #fff; color: var(--ink); resize: vertical; }
+.drawer-form input:focus, .drawer-form textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(193,154,69,.15); }
+.drawer-form input.err, .drawer-form textarea.err { border-color: #c0392b; }
 .drawer-list { flex: 1; padding: 14px 22px; display: flex; flex-direction: column; gap: 14px; }
 .q-row { display: flex; gap: 14px; align-items: flex-start; padding-bottom: 14px; border-bottom: 1px solid var(--line-2); }
 .q-thumb { width: 66px; height: 66px; border-radius: 10px; overflow: hidden; flex: none; }

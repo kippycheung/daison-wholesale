@@ -132,6 +132,40 @@ const SEED_PRODUCTS = [
 ];
 
 /* ===========================================================
+   Editable home-page content (defaults; overridable in Admin)
+   =========================================================== */
+const HOME_ICON_CHOICES = ["box", "snow", "leaf", "truck", "shield", "star", "check", "pin", "clock", "phone", "mail", "doc", "cloud"];
+
+const HOME_DEFAULTS = {
+  heroTag: "Calgary, Alberta",
+  heroTitle: "Wholesale packaging, frozen & dry foods — delivered across Calgary.",
+  heroSub: "Daison Wholesale supplies restaurants, grocers and foodservice with takeout packaging, flash-frozen foods, dry goods and everyday essentials — at true wholesale volume. Custom-branded packaging available on request.",
+  heroFloatK: "Flash-frozen",
+  heroFloatV: "at peak freshness",
+  heroImgMain: "", heroImgA: "", heroImgB: "",   // "" → fall back to window.__resources.*
+  trust: [
+    { ic: "box", k: "Packaging first", v: "Containers, cups & cutlery" },
+    { ic: "snow", k: "Cold-chain kept", v: "−18°C from dock to door" },
+    { ic: "leaf", k: "Eco & custom", v: "Compostable + logo printing" },
+    { ic: "truck", k: "Calgary delivery", v: "Free over $250" },
+  ],
+  promoTitle: "Eco takeout packaging, priced for volume.",
+  promoText: "Compostable clamshells, deli containers, soup bowls, cups and heavy cutlery — stock your line and cut your packaging cost. Want it branded? We also print your logo on takeout boxes and bags. Ask for our current case pricing.",
+  aboutTitle: "A Calgary supplier that kitchens count on.",
+  aboutText: "Daison Wholesale is a Calgary packaging and food supplier. Our focus is takeout and foodservice packaging — containers, bowls, cups and cutlery — backed by a tight range of flash-frozen foods, dry goods and everyday essentials. Based in northeast Calgary, we’ve grown into a trusted wholesale partner for restaurants, grocers and food businesses across the city.",
+  aboutImg: "",
+  aboutStatN: "4",
+  aboutStatL: "product categories, one delivery",
+};
+
+/* Merge saved home content over defaults so older saved settings still work. */
+function mergeHome(saved) {
+  const h = Object.assign({}, HOME_DEFAULTS, saved || {});
+  if (!Array.isArray(h.trust) || !h.trust.length) h.trust = HOME_DEFAULTS.trust;
+  return h;
+}
+
+/* ===========================================================
    Store
    =========================================================== */
 const DaisonStore = (function () {
@@ -161,6 +195,8 @@ const DaisonStore = (function () {
       email: "daisonwholesale@gmail.com",
       address: "609-28 St NE, Calgary, AB T2A 4L6, Canada",
       hours: "Mon–Fri 9:00–5:00 · Sat 10:00–4:00 · Sun & Holidays Closed",
+      mapQuery: "609-28 St NE, Calgary, AB T2A 4L6",
+      home: JSON.parse(JSON.stringify(HOME_DEFAULTS)),
     };
   }
 
@@ -255,6 +291,8 @@ const DaisonStore = (function () {
     getProducts() { return state.products; },
     getCategories() { return state.categories; },
     getSettings() { return state.settings; },
+    getHome() { return mergeHome(state.settings && state.settings.home); },
+    iconChoices() { return HOME_ICON_CHOICES.slice(); },
     getProduct(id) { return state.products.find((p) => p.id === id); },
     categoryName(id) { const c = state.categories.find((c) => c.id === id); return c ? c.name : id; },
 
@@ -279,6 +317,33 @@ const DaisonStore = (function () {
       emit();
     },
     updateSettings(s) { state.settings = { ...state.settings, ...s }; emit(); },
+    updateHome(patch) {
+      const home = Object.assign({}, mergeHome(state.settings.home), patch);
+      state.settings = Object.assign({}, state.settings, { home });
+      emit();
+    },
+
+    /* Send a quote / contact request. Tries the server endpoint first
+       (real email via /api/contact); falls back to opening the mail app. */
+    async sendQuote(payload) {
+      try {
+        const r = await fetch((window.__API_BASE || "") + "/api/contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const ct = r.headers.get("content-type") || "";
+        if (r.ok && ct.includes("application/json")) {
+          const d = await r.json();
+          if (d && d.ok) return { ok: true, method: "email" };
+          return { ok: false, method: "email", error: (d && d.error) || "Send failed" };
+        }
+        if (r.status === 404) return { ok: false, method: "none", error: "no-endpoint" };
+        return { ok: false, method: "email", error: "Send failed (" + r.status + ")" };
+      } catch (e) {
+        return { ok: false, method: "none", error: "network" };
+      }
+    },
 
     /* ---- server mode ---- */
     init,

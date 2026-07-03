@@ -132,7 +132,8 @@
 .ci-k { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); }
 .ci-v { font-size: 15px; font-weight: 600; margin-top: 2px; line-height: 1.4; }
 a.ci-row:hover .ci-v { color: var(--green-700); }
-.contact-map { aspect-ratio: 4/3; border-radius: var(--r-lg); border: 1px solid var(--line); }
+.contact-map { aspect-ratio: 4/3; border-radius: var(--r-lg); border: 1px solid var(--line); overflow: hidden; }
+.contact-map iframe { width: 100%; height: 100%; display: block; }
 .contact-sent { padding: 80px 28px; }
 .sent-card { max-width: 560px; margin: 0 auto; text-align: center; padding: 48px 40px; }
 .sent-ic { width: 70px; height: 70px; border-radius: 999px; background: rgba(47,135,103,.12); color: var(--good);

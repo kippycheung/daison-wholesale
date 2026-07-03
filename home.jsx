@@ -4,13 +4,15 @@
 
 function HomeHero() {
   const s = DaisonStore.getSettings();
+  const h = DaisonStore.getHome();
+  const R = window.__resources || {};
   return (
     <section className="hero">
       <div className="wrap hero-grid">
         <div className="hero-copy">
-          <div className="tag"><Icon name="pin" size={13} /> Calgary, Alberta</div>
-          <h1 className="hero-h1">Wholesale packaging, frozen &amp; dry foods — <span className="hl">delivered across Calgary.</span></h1>
-          <p className="hero-sub">Daison Wholesale supplies restaurants, grocers and foodservice with takeout packaging, flash-frozen foods, dry goods and everyday essentials — at true wholesale volume. Custom-branded packaging available on request.</p>
+          <div className="tag"><Icon name="pin" size={13} /> {h.heroTag}</div>
+          <h1 className="hero-h1">{h.heroTitle}</h1>
+          <p className="hero-sub">{h.heroSub}</p>
           <div className="hero-cta">
             <a href="#/catalogue" className="btn btn-primary btn-lg">Browse catalogue <Icon name="arrow" size={18} /></a>
             <a href="#/contact" className="btn btn-ghost btn-lg">Request a quote</a>
@@ -20,14 +22,14 @@ function HomeHero() {
           </div>
         </div>
         <div className="hero-media">
-          <div className="hero-img main"><Img src={window.__resources.promoBanner} label="Mid-Year Mega Promo" /></div>
-          <div className="hero-img small a"><Img src={window.__resources.storefront} label="our Calgary store" /></div>
-          <div className="hero-img small b"><Img src={window.__resources.cta} label="wholesale distribution" /></div>
+          <div className="hero-img main"><Img src={h.heroImgMain || R.promoBanner} label="Mid-Year Mega Promo" /></div>
+          <div className="hero-img small a"><Img src={h.heroImgA || R.storefront} label="our Calgary store" /></div>
+          <div className="hero-img small b"><Img src={h.heroImgB || R.cta} label="wholesale distribution" /></div>
           <div className="hero-float">
             <div className="hero-float-ic"><Icon name="snow" size={20} /></div>
             <div>
-              <div className="hf-k">Flash-frozen</div>
-              <div className="hf-v">at peak freshness</div>
+              <div className="hf-k">{h.heroFloatK}</div>
+              <div className="hf-v">{h.heroFloatV}</div>
             </div>
           </div>
         </div>
@@ -37,17 +39,12 @@ function HomeHero() {
 }
 
 function TrustStrip() {
-  const items = [
-    { ic: "box", k: "Packaging first", v: "Containers, cups & cutlery" },
-    { ic: "snow", k: "Cold-chain kept", v: "−18°C from dock to door" },
-    { ic: "leaf", k: "Eco & custom", v: "Compostable + logo printing" },
-    { ic: "truck", k: "Calgary delivery", v: "Free over $250" },
-  ];
+  const items = DaisonStore.getHome().trust;
   return (
     <div className="trust">
       <div className="wrap trust-row">
-        {items.map((t) => (
-          <div className="trust-item" key={t.k}>
+        {items.map((t, i) => (
+          <div className="trust-item" key={i}>
             <div className="trust-ic"><Icon name={t.ic} size={20} /></div>
             <div>
               <div className="trust-k">{t.k}</div>
@@ -74,7 +71,7 @@ function CategoryGrid() {
       <div className="cat-grid">
         {cats.map((c, i) => (
           <a key={c.id} href={"#/catalogue?cat=" + c.id} className={"cat-card" + (i === 0 ? " feature" : "")}>
-            <div className="cat-card-media"><Img label={labels[c.id] || c.name.toLowerCase()} /></div>
+            <div className="cat-card-media"><Img src={c.image} label={labels[c.id] || c.name.toLowerCase()} /></div>
             <div className="cat-card-body">
               <div>
                 <h3 className="cat-card-name">{c.name}</h3>
@@ -110,6 +107,7 @@ function FeaturedRow() {
 
 function PromoBand() {
   const store = useStore();
+  const h = store.getHome();
   const promos = store.getProducts().filter((p) => p.promo).slice(0, 5);
   return (
     <section className="promo-band">
@@ -117,14 +115,14 @@ function PromoBand() {
         <div className="promo-inner">
           <div className="promo-copy">
             <div className="eyebrow" style={{ color: "var(--gold-soft)" }}>This month</div>
-            <h2 className="promo-h2">Eco takeout packaging,<br/>priced for volume.</h2>
-            <p>Compostable clamshells, deli containers, soup bowls, cups and heavy cutlery — stock your line and cut your packaging cost. Want it branded? We also print your logo on takeout boxes and bags. Ask for our current case pricing.</p>
+            <h2 className="promo-h2">{h.promoTitle}</h2>
+            <p>{h.promoText}</p>
             <a href="#/catalogue?cat=packaging" className="btn btn-gold btn-lg">Shop packaging <Icon name="arrow" size={18} /></a>
           </div>
           <div className="promo-grid">
             {promos.map((p) => (
               <a href={"#/product/" + p.id} key={p.id} className="promo-chip">
-                <div className="promo-chip-media"><Img label="pkg" /></div>
+                <div className="promo-chip-media"><Img src={p.image} label="pkg" /></div>
                 <div className="promo-chip-name">{p.name}</div>
                 <div className="promo-chip-pack">{p.pack}</div>
               </a>
@@ -137,19 +135,21 @@ function PromoBand() {
 }
 
 function AboutTeaser() {
+  const h = DaisonStore.getHome();
+  const R = window.__resources || {};
   return (
     <section className="wrap sec about-teaser">
       <div className="about-media">
-        <Img src={window.__resources.storefront} label="our Calgary store" />
+        <Img src={h.aboutImg || R.storefront} label="our Calgary store" />
         <div className="about-stat">
-          <div className="about-stat-n">4</div>
-          <div className="about-stat-l">product categories,<br/>one delivery</div>
+          <div className="about-stat-n">{h.aboutStatN}</div>
+          <div className="about-stat-l">{h.aboutStatL}</div>
         </div>
       </div>
       <div className="about-copy">
         <div className="eyebrow">Our story</div>
-        <h2 className="sec-title">A Calgary supplier that kitchens count on.</h2>
-        <p>Daison Wholesale is a Calgary packaging and food supplier. Our focus is takeout and foodservice packaging — containers, bowls, cups and cutlery — backed by a tight range of flash-frozen foods, dry goods and everyday essentials. Based in northeast Calgary, we’ve grown into a trusted wholesale partner for restaurants, grocers and food businesses across the city.</p>
+        <h2 className="sec-title">{h.aboutTitle}</h2>
+        <p>{h.aboutText}</p>
         <ul className="about-list">
           <li><Icon name="check" size={18} /> Takeout packaging in case quantities — custom logo printing available</li>
           <li><Icon name="check" size={18} /> One invoice across packaging, frozen &amp; dry goods</li>

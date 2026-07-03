@@ -159,14 +159,7 @@ function QuoteDrawer() {
         </div>
 
         {items.length === 0 ? (
-          <div className="drawer-empty">
-            <Icon name="doc" size={34} />
-            <p>Your quote list is empty.</p>
-            <span className="muted">Browse the catalogue and add the items you need — then send us one request for pricing.</span>
-            <a href="#/catalogue" className="btn btn-primary" onClick={() => setOpen(false)} style={{ marginTop: 8 }}>
-              Browse catalogue <Icon name="arrow" size={17} />
-            </a>
-          </div>
+          <DrawerContactForm onClose={() => setOpen(false)} />
         ) : (
           <>
             <div className="drawer-list scroll-y">
@@ -202,3 +195,63 @@ function QuoteDrawer() {
 }
 
 Object.assign(window, { Header, Footer, QuoteDrawer });
+
+/* Compact contact form shown when the quote list is empty. */
+function DrawerContactForm({ onClose }) {
+  const s = DaisonStore.getSettings();
+  const [form, setForm] = useState({ name: "", business: "", email: "", phone: "", message: "" });
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(null);
+  const [errs, setErrs] = useState({});
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    const er = {};
+    if (!form.name.trim()) er.name = 1;
+    if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email)) er.email = 1;
+    if (!form.message.trim()) er.message = 1;
+    setErrs(er);
+    if (Object.keys(er).length) return;
+    setBusy(true);
+    const res = await submitQuoteRequest(form, [], s);
+    setBusy(false);
+    setSent(res.method);
+  };
+
+  if (sent) {
+    return (
+      <div className="drawer-empty">
+        <div className="sent-ic" style={{ width: 60, height: 60 }}><Icon name="check" size={30} /></div>
+        <p style={{ fontWeight: 700 }}>{sent === "email" ? "Message sent — thank you!" : "Your email is ready to send"}</p>
+        <span className="muted">{sent === "email" ? "We’ll reply, usually the same business day." : "Just hit send in your mail app."}</span>
+        <a href="#/catalogue" className="btn btn-primary" onClick={onClose} style={{ marginTop: 8 }}>Browse catalogue <Icon name="arrow" size={17} /></a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="drawer-contact scroll-y">
+      <div className="drawer-contact-intro">
+        <Icon name="mail" size={28} />
+        <p>Your quote list is empty — but you can still reach us. Send a message and we’ll reply with pricing and availability.</p>
+        <a href="#/catalogue" className="drawer-browse" onClick={onClose}>or browse the catalogue <Icon name="arrow" size={14} /></a>
+      </div>
+      <form className="drawer-form" onSubmit={submit} noValidate>
+        <label className="field"><span>Your name *</span>
+          <input value={form.name} onChange={set("name")} className={errs.name ? "err" : ""} placeholder="Jane Smith" /></label>
+        <label className="field"><span>Email *</span>
+          <input value={form.email} onChange={set("email")} className={errs.email ? "err" : ""} placeholder="you@business.com" /></label>
+        <label className="field"><span>Business name</span>
+          <input value={form.business} onChange={set("business")} placeholder="Restaurant / store" /></label>
+        <label className="field"><span>Phone</span>
+          <input value={form.phone} onChange={set("phone")} placeholder="(587) 000-0000" /></label>
+        <label className="field"><span>What do you need? *</span>
+          <textarea rows={4} value={form.message} onChange={set("message")} className={errs.message ? "err" : ""} placeholder="List items, quantities, delivery area…" /></label>
+        <button className="btn btn-gold" type="submit" disabled={busy} style={{ justifyContent: "center" }}>
+          <Icon name="mail" size={17} /> {busy ? "Sending…" : "Send message"}
+        </button>
+      </form>
+    </div>
+  );
+}

@@ -73,6 +73,23 @@ duplicate the admin.)
   users), reset passwords, or remove someone. You can't delete the last user.
 - **Backups:** **Backup** tab → Download JSON anytime.
 
+## Contact form → real email (Resend)
+The quote / contact form sends a real email through **Resend** (free tier). Without it,
+the form falls back to opening the visitor's mail app — so this is optional but recommended.
+
+1. Sign up at **resend.com** with `daisonwholesale@gmail.com`.
+2. **API Keys → Create API Key**, copy it.
+3. In Vercel → Environment Variables, add:
+   - `RESEND_API_KEY` — the key you copied
+   - *(optional)* `CONTACT_TO` — where quote requests are emailed (defaults to `daisonwholesale@gmail.com`)
+   - *(optional)* `CONTACT_FROM` — sender; leave unset to use Resend's shared `onboarding@resend.dev`
+4. Redeploy.
+
+Note: until you verify your own domain in Resend, emails send from `onboarding@resend.dev`
+and can only be delivered to your Resend account's own address (your Gmail) — which is
+exactly what you want here. To send from a branded address later, verify a domain in Resend
+and set `CONTACT_FROM`.
+
 ## Security notes (production)
 - Passwords are hashed with **bcrypt**; only the hash is stored, never the plain text.
 - Login issues a **signed, http-only, Secure cookie** (JWT, HS256) that lasts ~30 days;
