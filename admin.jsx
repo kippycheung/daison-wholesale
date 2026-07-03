@@ -206,16 +206,27 @@ function AdminCategories() {
   const store = useStore();
   const cats = store.getCategories();
   const products = store.getProducts();
-  const [draft, setDraft] = useState({ name: "", blurb: "" });
+  const [draft, setDraft] = useState({ name: "", blurb: "", image: "" });
   const [editId, setEditId] = useState(null);
-  const [editDraft, setEditDraft] = useState({ name: "", blurb: "" });
+  const [editDraft, setEditDraft] = useState({ name: "", blurb: "", image: "" });
 
   const add = () => {
     if (!draft.name.trim()) return;
-    store.upsertCategory({ id: slugify(draft.name) || "cat-" + Date.now(), name: draft.name.trim(), blurb: draft.blurb.trim() });
-    setDraft({ name: "", blurb: "" });
+    store.upsertCategory({ id: slugify(draft.name) || "cat-" + Date.now(), name: draft.name.trim(), blurb: draft.blurb.trim(), image: draft.image || "" });
+    setDraft({ name: "", blurb: "", image: "" });
   };
   const countFor = (id) => products.filter((p) => p.category === id).length;
+
+  const pickImage = async (e, apply) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    try {
+      let url = await fileToDataUrl(f);
+      url = await downscale(url, 1100);
+      apply(url);
+    } catch (err) { alert("Could not read image"); }
+    e.target.value = "";
+  };
 
   return (
     <div>
@@ -234,22 +245,35 @@ function AdminCategories() {
         {cats.map((c) => (
           <div className="adm-cat-item card" key={c.id}>
             {editId === c.id ? (
-              <div className="adm-cat-edit">
-                <input className="adm-input" value={editDraft.name} onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })} />
-                <input className="adm-input" value={editDraft.blurb} onChange={(e) => setEditDraft({ ...editDraft, blurb: e.target.value })} />
+              <div className="adm-cat-editbox">
+                <div className="adm-cat-img-edit">
+                  <div className="adm-cat-thumb"><Img src={editDraft.image} label="no photo" rounded="10px" /></div>
+                  <div className="adm-cat-img-actions">
+                    <label className="btn btn-ghost btn-sm"><Icon name="upload" size={15} /> Upload photo
+                      <input type="file" accept="image/*" hidden onChange={(e) => pickImage(e, (url) => setEditDraft((d) => ({ ...d, image: url })))} /></label>
+                    {editDraft.image && <button className="btn btn-ghost btn-sm" onClick={() => setEditDraft({ ...editDraft, image: "" })}>Remove</button>}
+                    <input className="adm-input" placeholder="…or paste image URL"
+                      value={editDraft.image && editDraft.image.startsWith("http") ? editDraft.image : ""} onChange={(e) => setEditDraft({ ...editDraft, image: e.target.value })} />
+                  </div>
+                </div>
+                <div className="adm-field"><label>Name</label>
+                  <input className="adm-input" value={editDraft.name} onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })} /></div>
+                <div className="adm-field"><label>Blurb</label>
+                  <input className="adm-input" value={editDraft.blurb} onChange={(e) => setEditDraft({ ...editDraft, blurb: e.target.value })} /></div>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button className="btn btn-primary btn-sm" onClick={() => { store.upsertCategory({ ...c, name: editDraft.name, blurb: editDraft.blurb }); setEditId(null); }}>Save</button>
+                  <button className="btn btn-primary btn-sm" onClick={() => { store.upsertCategory({ ...c, name: editDraft.name, blurb: editDraft.blurb, image: editDraft.image }); setEditId(null); }}><Icon name="check" size={15} /> Save</button>
                   <button className="btn btn-ghost btn-sm" onClick={() => setEditId(null)}>Cancel</button>
                 </div>
               </div>
             ) : (
               <>
+                <div className="adm-cat-thumb sm"><Img src={c.image} label="—" rounded="10px" /></div>
                 <div className="adm-cat-info">
                   <div className="adm-cat-name">{c.name} <span className="adm-cat-count">{countFor(c.id)} items</span></div>
                   <div className="adm-cat-blurb">{c.blurb || <em className="adm-muted">No blurb</em>}</div>
                 </div>
                 <div className="adm-actions">
-                  <button className="adm-iconbtn" onClick={() => { setEditId(c.id); setEditDraft({ name: c.name, blurb: c.blurb || "" }); }}><Icon name="edit" size={16} /></button>
+                  <button className="adm-iconbtn" onClick={() => { setEditId(c.id); setEditDraft({ name: c.name, blurb: c.blurb || "", image: c.image || "" }); }}><Icon name="edit" size={16} /></button>
                   <button className="adm-iconbtn danger" onClick={() => {
                     if (countFor(c.id) > 0) { alert("Move or delete the " + countFor(c.id) + " product(s) in this category first."); return; }
                     if (confirm("Delete category “" + c.name + "”?")) store.deleteCategory(c.id);
@@ -277,6 +301,7 @@ function AdminSettings({ serverMode }) {
     ["email", "Email"],
     ["address", "Address"],
     ["hours", "Operating hours"],
+    ["mapQuery", "Map location (address the map & directions point to)"],
   ];
   return (
     <div>
@@ -333,6 +358,120 @@ function PasswordChanger({ store }) {
       </button>
       {msg && <p className={"adm-import-msg " + (msg.ok ? "ok" : "bad")} style={{ marginTop: 12 }}>{msg.t}</p>}
       <p className="adm-pw-fine">Stored as a one-way hash, never in plain text. Because this is a static site, treat it as a front-door lock — it keeps the panel private, and the Publish step is what actually protects the live site.</p>
+    </div>
+  );
+}
+
+/* ---------------- Home page content tab ---------------- */
+function ImgField({ label, value, fallbackNote, onChange }) {
+  const pick = async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    try { let url = await fileToDataUrl(f); url = await downscale(url, 1400); onChange(url); }
+    catch (err) { alert("Could not read image"); }
+    e.target.value = "";
+  };
+  return (
+    <div className="adm-imgfield">
+      <div className="adm-imgfield-prev"><Img src={value} label={fallbackNote || "no image"} rounded="10px" /></div>
+      <div className="adm-imgfield-body">
+        <label className="adm-imgfield-label">{label}</label>
+        <div className="adm-imgfield-actions">
+          <label className="btn btn-ghost btn-sm"><Icon name="upload" size={15} /> Upload
+            <input type="file" accept="image/*" hidden onChange={pick} /></label>
+          {value && <button className="btn btn-ghost btn-sm" onClick={() => onChange("")}>Use default</button>}
+        </div>
+        <input className="adm-input" placeholder="…or paste image URL"
+          value={value && value.startsWith("http") ? value : ""} onChange={(e) => onChange(e.target.value)} />
+      </div>
+    </div>
+  );
+}
+
+function AdminHome() {
+  const store = useStore();
+  const [h, setH] = useState(store.getHome());
+  const [saved, setSaved] = useState(false);
+  const icons = store.iconChoices();
+  const set = (k, v) => { setH((x) => ({ ...x, [k]: v })); setSaved(false); };
+  const setTrust = (i, k, v) => { setH((x) => { const t = x.trust.map((it) => ({ ...it })); t[i][k] = v; return { ...x, trust: t }; }); setSaved(false); };
+  const save = () => { store.updateHome(h); setSaved(true); };
+
+  return (
+    <div>
+      <div className="adm-bar">
+        <h2 className="adm-h2">Home page</h2>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {saved && <span className="adm-saved"><Icon name="check" size={15} /> Saved</span>}
+          <button className="btn btn-primary" onClick={save}><Icon name="check" size={17} /> Save home page</button>
+        </div>
+      </div>
+      <p className="adm-users-note">Edit the words, photos and icons on your home page. Changes save when you press the button above.</p>
+
+      <div className="card adm-home-sec">
+        <h3 className="adm-home-h3">Hero (top of page)</h3>
+        <div className="adm-field"><label>Small tag line</label>
+          <input className="adm-input" value={h.heroTag} onChange={(e) => set("heroTag", e.target.value)} /></div>
+        <div className="adm-field"><label>Headline</label>
+          <textarea className="adm-input" rows={2} value={h.heroTitle} onChange={(e) => set("heroTitle", e.target.value)} /></div>
+        <div className="adm-field"><label>Sub-text</label>
+          <textarea className="adm-input" rows={3} value={h.heroSub} onChange={(e) => set("heroSub", e.target.value)} /></div>
+        <div className="adm-grid-2">
+          <div className="adm-field"><label>Badge title</label>
+            <input className="adm-input" value={h.heroFloatK} onChange={(e) => set("heroFloatK", e.target.value)} /></div>
+          <div className="adm-field"><label>Badge sub-title</label>
+            <input className="adm-input" value={h.heroFloatV} onChange={(e) => set("heroFloatV", e.target.value)} /></div>
+        </div>
+        <ImgField label="Main hero image" value={h.heroImgMain} fallbackNote="using default" onChange={(v) => set("heroImgMain", v)} />
+        <div className="adm-grid-2">
+          <ImgField label="Small image (top)" value={h.heroImgA} fallbackNote="using default" onChange={(v) => set("heroImgA", v)} />
+          <ImgField label="Small image (bottom)" value={h.heroImgB} fallbackNote="using default" onChange={(v) => set("heroImgB", v)} />
+        </div>
+      </div>
+
+      <div className="card adm-home-sec">
+        <h3 className="adm-home-h3">Highlights strip (4 items)</h3>
+        {h.trust.map((t, i) => (
+          <div className="adm-trust-row" key={i}>
+            <div className="adm-trust-ic"><Icon name={t.ic} size={22} /></div>
+            <div className="adm-field"><label>Icon</label>
+              <select className="adm-input" value={t.ic} onChange={(e) => setTrust(i, "ic", e.target.value)}>
+                {icons.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select></div>
+            <div className="adm-field"><label>Title</label>
+              <input className="adm-input" value={t.k} onChange={(e) => setTrust(i, "k", e.target.value)} /></div>
+            <div className="adm-field"><label>Sub-text</label>
+              <input className="adm-input" value={t.v} onChange={(e) => setTrust(i, "v", e.target.value)} /></div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card adm-home-sec">
+        <h3 className="adm-home-h3">Promo band</h3>
+        <div className="adm-field"><label>Title</label>
+          <input className="adm-input" value={h.promoTitle} onChange={(e) => set("promoTitle", e.target.value)} /></div>
+        <div className="adm-field"><label>Text</label>
+          <textarea className="adm-input" rows={3} value={h.promoText} onChange={(e) => set("promoText", e.target.value)} /></div>
+      </div>
+
+      <div className="card adm-home-sec">
+        <h3 className="adm-home-h3">About teaser</h3>
+        <div className="adm-field"><label>Title</label>
+          <input className="adm-input" value={h.aboutTitle} onChange={(e) => set("aboutTitle", e.target.value)} /></div>
+        <div className="adm-field"><label>Text</label>
+          <textarea className="adm-input" rows={4} value={h.aboutText} onChange={(e) => set("aboutText", e.target.value)} /></div>
+        <div className="adm-grid-2">
+          <div className="adm-field"><label>Stat number</label>
+            <input className="adm-input" value={h.aboutStatN} onChange={(e) => set("aboutStatN", e.target.value)} /></div>
+          <div className="adm-field"><label>Stat label</label>
+            <input className="adm-input" value={h.aboutStatL} onChange={(e) => set("aboutStatL", e.target.value)} /></div>
+        </div>
+        <ImgField label="About image" value={h.aboutImg} fallbackNote="using default" onChange={(v) => set("aboutImg", v)} />
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+        <button className="btn btn-primary btn-lg" onClick={save}><Icon name="check" size={18} /> Save home page</button>
+      </div>
     </div>
   );
 }
@@ -447,6 +586,7 @@ function AdminPage({ onLogout, currentUser, serverMode }) {
   const tabs = [
     ["products", "Products", "grid"],
     ["categories", "Categories", "list"],
+    ["home", "Home page", "edit"],
     ["settings", "Site info", "edit"],
   ];
   if (serverMode) tabs.push(["users", "Users", "users"]);
@@ -485,6 +625,7 @@ function AdminPage({ onLogout, currentUser, serverMode }) {
         <div className="adm-content">
           {tab === "products" && <AdminProducts />}
           {tab === "categories" && <AdminCategories />}
+          {tab === "home" && <AdminHome />}
           {tab === "settings" && <AdminSettings serverMode={serverMode} />}
           {tab === "users" && <AdminUsers currentUser={currentUser} />}
           {tab === "data" && <AdminData serverMode={serverMode} />}
