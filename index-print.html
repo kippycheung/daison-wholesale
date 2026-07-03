@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daison Wholesale — Print</title>
+  <meta name="description" content="Calgary's wholesale source for takeout packaging, frozen foods, dry goods and restaurant supplies." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Source+Sans+3:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="components.css" />
+  <link rel="stylesheet" href="pages.css" />
+  <link rel="stylesheet" href="pages2.css" />
+  <link rel="stylesheet" href="admin.css" />
+
+  <style>
+    /* ---------- print-ready overrides ---------- */
+    @media print {
+      @page { size: portrait; margin: 1cm; }
+
+      html, body { background: #fff !important; }
+
+      *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        /* freeze any entrance animations at their end state */
+        animation-delay: -99s !important;
+        animation-duration: .001s !important;
+        animation-iteration-count: 1 !important;
+        animation-fill-mode: both !important;
+        animation-play-state: running !important;
+        transition-duration: 0s !important;
+      }
+
+      /* drop interactive chrome that has no meaning on paper */
+      .hdr-search, .quote-btn, .hamb, .mobile-menu,
+      .drawer-scrim, .drawer, .toast, .cat-pop { display: none !important; }
+
+      /* header should sit statically at the top, not stick */
+      .hdr { position: static !important; box-shadow: none !important; }
+
+      /* keep cohesive blocks from splitting across pages */
+      .trust-item, .cat-card, .pcard, .value-card, .promo-chip,
+      .cta-card, .about-stat-card, .hero-float { break-inside: avoid; }
+
+      .promo-band, .about-teaser, .cta-card { break-inside: avoid; }
+
+      /* give major sections a little breathing room when paginated */
+      .sec, .promo-band, .trust { break-inside: avoid-page; }
+
+      /* no hover affordances on paper */
+      a, .btn { box-shadow: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script src="catalogue.js"></script>
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="ui.jsx"></script>
+  <script type="text/babel" src="cards.jsx"></script>
+  <script type="text/babel" src="layout.jsx"></script>
+  <script type="text/babel" src="home.jsx"></script>
+  <script type="text/babel" src="catalogue.jsx"></script>
+  <script type="text/babel" src="product.jsx"></script>
+  <script type="text/babel" src="misc.jsx"></script>
+  <script type="text/babel" src="admin.jsx"></script>
+  <script type="text/babel" src="admin-users.jsx"></script>
+  <script type="text/babel" src="admin-auth.jsx"></script>
+  <script type="text/babel" src="app.jsx"></script>
+
+  <!-- force the Home route, then auto-print once fonts + app are ready -->
+  <script type="text/babel">
+    if (window.location.hash.replace("#", "") !== "/") {
+      window.location.hash = "/";
+    }
+    (function autoPrint() {
+      const ready = document.fonts ? document.fonts.ready : Promise.resolve();
+      Promise.resolve(ready).then(function () {
+        // wait for React to mount real content into #root
+        const start = Date.now();
+        (function waitForMount() {
+          const root = document.getElementById("root");
+          const mounted = root && root.querySelector(".hdr");
+          if (mounted || Date.now() - start > 6000) {
+            setTimeout(function () { window.print(); }, 500);
+          } else {
+            setTimeout(waitForMount, 100);
+          }
+        })();
+      });
+    })();
+  </script>
+</body>
+</html>
