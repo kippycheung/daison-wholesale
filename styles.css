@@ -27,9 +27,9 @@
   --line-2:    rgba(26,28,25,0.08);
   --good:      #2f8767;
   /* type */
-  --display: "Archivo", system-ui, sans-serif;
-  --body: "Source Sans 3", system-ui, sans-serif;
-  --mono: "Space Mono", ui-monospace, monospace;
+  --display: "Poppins", system-ui, sans-serif;
+  --body: "Poppins", system-ui, sans-serif;
+  --mono: "Poppins", system-ui, sans-serif;
 
   /* shape */
   --r-sm: 6px;

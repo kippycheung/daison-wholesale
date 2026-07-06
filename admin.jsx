@@ -416,17 +416,7 @@ function AdminHome() {
           <textarea className="adm-input" rows={2} value={h.heroTitle} onChange={(e) => set("heroTitle", e.target.value)} /></div>
         <div className="adm-field"><label>Sub-text</label>
           <textarea className="adm-input" rows={3} value={h.heroSub} onChange={(e) => set("heroSub", e.target.value)} /></div>
-        <div className="adm-grid-2">
-          <div className="adm-field"><label>Badge title</label>
-            <input className="adm-input" value={h.heroFloatK} onChange={(e) => set("heroFloatK", e.target.value)} /></div>
-          <div className="adm-field"><label>Badge sub-title</label>
-            <input className="adm-input" value={h.heroFloatV} onChange={(e) => set("heroFloatV", e.target.value)} /></div>
-        </div>
-        <ImgField label="Main hero image" value={h.heroImgMain} fallbackNote="using default" onChange={(v) => set("heroImgMain", v)} />
-        <div className="adm-grid-2">
-          <ImgField label="Small image (top)" value={h.heroImgA} fallbackNote="using default" onChange={(v) => set("heroImgA", v)} />
-          <ImgField label="Small image (bottom)" value={h.heroImgB} fallbackNote="using default" onChange={(v) => set("heroImgB", v)} />
-        </div>
+        <ImgField label="Hero photo" value={h.heroImgMain} fallbackNote="using default" onChange={(v) => set("heroImgMain", v)} />
       </div>
 
       <div className="card adm-home-sec">
@@ -452,6 +442,7 @@ function AdminHome() {
           <input className="adm-input" value={h.promoTitle} onChange={(e) => set("promoTitle", e.target.value)} /></div>
         <div className="adm-field"><label>Text</label>
           <textarea className="adm-input" rows={3} value={h.promoText} onChange={(e) => set("promoText", e.target.value)} /></div>
+        <ImgField label="Banner image (best at 1200×630 — shown whole, not cropped)" value={h.promoBanner} fallbackNote="using default" onChange={(v) => set("promoBanner", v)} />
       </div>
 
       <div className="card adm-home-sec">

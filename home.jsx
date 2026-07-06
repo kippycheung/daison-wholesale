@@ -22,16 +22,7 @@ function HomeHero() {
           </div>
         </div>
         <div className="hero-media">
-          <div className="hero-img main"><Img src={h.heroImgMain || R.promoBanner} label="Mid-Year Mega Promo" /></div>
-          <div className="hero-img small a"><Img src={h.heroImgA || R.storefront} label="our Calgary store" /></div>
-          <div className="hero-img small b"><Img src={h.heroImgB || R.cta} label="wholesale distribution" /></div>
-          <div className="hero-float">
-            <div className="hero-float-ic"><Icon name="snow" size={20} /></div>
-            <div>
-              <div className="hf-k">{h.heroFloatK}</div>
-              <div className="hf-v">{h.heroFloatV}</div>
-            </div>
-          </div>
+          <Img src={h.heroImgMain || R.storefront} label="Daison Wholesale" />
         </div>
       </div>
     </section>
@@ -108,7 +99,8 @@ function FeaturedRow() {
 function PromoBand() {
   const store = useStore();
   const h = store.getHome();
-  const promos = store.getProducts().filter((p) => p.promo).slice(0, 5);
+  const R = window.__resources || {};
+  const banner = h.promoBanner || R.promoBanner;
   return (
     <section className="promo-band">
       <div className="wrap">
@@ -119,15 +111,9 @@ function PromoBand() {
             <p>{h.promoText}</p>
             <a href="#/catalogue?cat=packaging" className="btn btn-gold btn-lg">Shop packaging <Icon name="arrow" size={18} /></a>
           </div>
-          <div className="promo-grid">
-            {promos.map((p) => (
-              <a href={"#/product/" + p.id} key={p.id} className="promo-chip">
-                <div className="promo-chip-media"><Img src={p.image} label="pkg" /></div>
-                <div className="promo-chip-name">{p.name}</div>
-                <div className="promo-chip-pack">{p.pack}</div>
-              </a>
-            ))}
-          </div>
+          <a href="#/catalogue?cat=packaging" className="promo-banner">
+            <img src={banner} alt="Featured promotion" />
+          </a>
         </div>
       </div>
     </section>

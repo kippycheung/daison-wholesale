@@ -151,6 +151,7 @@ const HOME_DEFAULTS = {
   ],
   promoTitle: "Eco takeout packaging, priced for volume.",
   promoText: "Compostable clamshells, deli containers, soup bowls, cups and heavy cutlery — stock your line and cut your packaging cost. Want it branded? We also print your logo on takeout boxes and bags. Ask for our current case pricing.",
+  promoBanner: "",   // 1200×630 banner, shown whole; "" → default
   aboutTitle: "A Calgary supplier that kitchens count on.",
   aboutText: "Daison Wholesale is a Calgary packaging and food supplier. Our focus is takeout and foodservice packaging — containers, bowls, cups and cutlery — backed by a tight range of flash-frozen foods, dry goods and everyday essentials. Based in northeast Calgary, we’ve grown into a trusted wholesale partner for restaurants, grocers and food businesses across the city.",
   aboutImg: "",
