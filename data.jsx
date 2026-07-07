@@ -249,11 +249,22 @@ const DaisonStore = (function () {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ categories: state.categories, products: state.products, settings: state.settings }),
       });
-      if (r.status === 401) { setSync("auth"); return; }
+      if (r.status === 401) { setSync("auth"); return false; }
       if (!r.ok) throw new Error("PUT " + r.status);
       serverEmpty = false;
       setSync("saved");
-    } catch (e) { setSync("error"); }
+      // cloud is now source of truth — clear the local safety backup
+      try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+      return true;
+    } catch (e) { setSync("error"); return false; }
+  }
+
+  // Force an immediate save (used by admin "Save" buttons) and report the result.
+  async function flush() {
+    if (!serverMode) { state.__draft = true; save(state); return true; }
+    clearTimeout(syncTimer);
+    setSync("saving");
+    return doSync();
   }
 
   async function init() {
@@ -282,8 +293,13 @@ const DaisonStore = (function () {
   }
 
   function emit() {
-    if (serverMode) { notify(); scheduleSync(); }
-    else { state.__draft = true; save(state); notify(); }
+    if (serverMode) {
+      // keep a local safety backup so edits are never lost if a cloud save fails
+      state.__pending = true;
+      save(state);
+      notify();
+      scheduleSync();
+    } else { state.__draft = true; save(state); notify(); }
   }
 
   return {
@@ -348,6 +364,7 @@ const DaisonStore = (function () {
 
     /* ---- server mode ---- */
     init,
+    flush,
     serverMode() { return serverMode; },
     serverEmpty() { return serverEmpty; },
     syncStatus() { return sync; },
