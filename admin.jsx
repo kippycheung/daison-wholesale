@@ -120,7 +120,8 @@ function ProductEditor({ initial, onClose }) {
   );
 }
 
-function downscale(dataUrl, maxW) {
+function downscale(dataUrl, maxW, quality) {
+  const q = quality || 0.85;
   return new Promise((res) => {
     const img = new Image();
     img.onload = () => {
@@ -129,7 +130,7 @@ function downscale(dataUrl, maxW) {
       const c = document.createElement("canvas");
       c.width = maxW; c.height = Math.round(img.height * scale);
       c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      res(c.toDataURL("image/jpeg", 0.85));
+      res(c.toDataURL("image/jpeg", q));
     };
     img.onerror = () => res(dataUrl);
     img.src = dataUrl;
@@ -367,7 +368,7 @@ function ImgField({ label, value, fallbackNote, onChange }) {
   const pick = async (e) => {
     const f = e.target.files && e.target.files[0];
     if (!f) return;
-    try { let url = await fileToDataUrl(f); url = await downscale(url, 1400); onChange(url); }
+    try { let url = await fileToDataUrl(f); url = await downscale(url, 2000, 0.9); onChange(url); }
     catch (err) { alert("Could not read image"); }
     e.target.value = "";
   };
