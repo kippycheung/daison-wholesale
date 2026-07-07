@@ -27,4 +27,26 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+/* Catches any render error so the page shows a message instead of going blank. */
+class ErrorBoundary extends React.Component {
+  constructor(p) { super(p); this.state = { err: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  componentDidCatch(err, info) { console.error("App render error:", err, info); }
+  render() {
+    if (this.state.err) {
+      return (
+        <div style={{ maxWidth: 640, margin: "80px auto", padding: "0 24px", fontFamily: "Poppins, system-ui, sans-serif", color: "#222", textAlign: "center" }}>
+          <h1 style={{ fontSize: 24, marginBottom: 12 }}>Something didn’t load</h1>
+          <p style={{ color: "#666", lineHeight: 1.6 }}>A file may not have finished deploying. Try a hard refresh (Ctrl/Cmd + Shift + R). If it persists, one of the site files likely didn’t upload — re-upload all files and redeploy.</p>
+          <pre style={{ textAlign: "left", background: "#f5f3ee", padding: 14, borderRadius: 10, marginTop: 18, fontSize: 12, overflow: "auto", color: "#a33" }}>{String(this.state.err && this.state.err.message || this.state.err)}</pre>
+          <a href="#/" onClick={() => location.reload()} style={{ display: "inline-block", marginTop: 18, color: "#161616", fontWeight: 700 }}>Reload</a>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <ErrorBoundary><App /></ErrorBoundary>
+);
